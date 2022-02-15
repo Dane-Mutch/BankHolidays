@@ -8,26 +8,10 @@
  * @format
  */
 
-import React, {useCallback, useEffect, useState} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-import {useAsync} from './hooks/useAsync';
-import {BankHolidayResponse} from './types';
+import {BankHolidayResponse, Event} from './types';
 
 const isFutureDatePredicate = (value: string) => {
   const now = new Date();
@@ -35,7 +19,7 @@ const isFutureDatePredicate = (value: string) => {
   return now.getTime() <= dateToTest.getTime();
 };
 
-const filterBankHolidayData = (data: BankHolidayResponse): Event[] => {
+const getUpcomingBankHolidays = (data: BankHolidayResponse): Event[] => {
   const events = data['england-and-wales'].events;
   const futureEvents = events.filter(event => {
     return isFutureDatePredicate(event.date);
@@ -45,28 +29,33 @@ const filterBankHolidayData = (data: BankHolidayResponse): Event[] => {
 };
 
 const App = () => {
-  const [bankHolidays, setBankHolidays] = useState<Event | null>(null);
+  const [bankHolidays, setBankHolidays] = useState<Event[]>();
 
-  const fetchBankHolidays = useCallback(async () => {
-    try {
-      const res = await fetch('https://gov.uk/bank-holidays.json');
-      return res.json();
-    } catch (err) {
-      console.log(err);
+  useEffect(() => {
+    if (!bankHolidays) {
+      const fetchBankHolidays = async () => {
+        try {
+          const res = await fetch('https://gov.uk/bank-holidays.json');
+          const json: BankHolidayResponse = await res.json();
+          const upcomingBankHolidays = getUpcomingBankHolidays(json);
+          setBankHolidays(upcomingBankHolidays);
+        } catch (err) {
+          console.log(err);
+        }
+      };
+      fetchBankHolidays();
     }
-  }, []);
-
-  const {status, value, error} = useAsync<void>(
-    fetchBankHolidays,
-    true,
-    filterBankHolidayData,
-  );
-
-  console.log(value);
+  }, [bankHolidays]);
 
   return (
     <SafeAreaView>
-      <ScrollView contentInsetAdjustmentBehavior="automatic"></ScrollView>
+      <ScrollView contentInsetAdjustmentBehavior="automatic">
+        {bankHolidays?.map(holiday => (
+          <View key={holiday.date}>
+            <Text>{holiday.title}</Text>
+          </View>
+        ))}
+      </ScrollView>
     </SafeAreaView>
   );
 };
