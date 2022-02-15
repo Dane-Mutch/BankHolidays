@@ -1,0 +1,42 @@
+import {useState, useEffect, useCallback} from 'react';
+
+type Status = 'idle' | 'pending' | 'success' | 'error';
+
+const transformerDefault = (a: any) => a;
+
+export const useAsync = <T, E = string>(
+  asyncFunction: () => Promise<T>,
+  immediate = true,
+  transformer: (a: any) => any = transformerDefault,
+) => {
+  const [status, setStatus] = useState<Status>('idle');
+  const [value, setValue] = useState<T | null>(null);
+  const [error, setError] = useState<E | null>(null);
+  // The execute function wraps asyncFunction and
+  // handles setting state for pending, value, and error.
+  // useCallback ensures the below useEffect is not called
+  // on every render, but only if asyncFunction changes.
+  const execute = useCallback(() => {
+    setStatus('pending');
+    setValue(null);
+    setError(null);
+    return asyncFunction()
+      .then((response: any) => {
+        setValue(transformer(response));
+        setStatus('success');
+      })
+      .catch((err: any) => {
+        setError(err);
+        setStatus('error');
+      });
+  }, [asyncFunction, transformer]);
+  // Call execute if we want to fire it right away.
+  // Otherwise execute can be called later, such as
+  // in an onClick handler.
+  useEffect(() => {
+    if (immediate) {
+      execute();
+    }
+  }, [execute, immediate]);
+  return {execute, status, value, error};
+};

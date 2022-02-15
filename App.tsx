@@ -8,7 +8,7 @@
  * @format
  */
 
-import React from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -26,69 +26,47 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import {useAsync} from './hooks/useAsync';
+import {BankHolidayResponse} from './types';
 
-const Section: React.FC<{
-  title: string;
-}> = ({children, title}) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+const isFutureDatePredicate = (value: string) => {
+  const now = new Date();
+  const dateToTest = new Date(value);
+  return now.getTime() <= dateToTest.getTime();
+};
+
+const filterBankHolidayData = (data: BankHolidayResponse): Event[] => {
+  const events = data['england-and-wales'].events;
+  const futureEvents = events.filter(event => {
+    return isFutureDatePredicate(event.date);
+  });
+
+  return futureEvents.slice(0, 5);
 };
 
 const App = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [bankHolidays, setBankHolidays] = useState<Event | null>(null);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  const fetchBankHolidays = useCallback(async () => {
+    try {
+      const res = await fetch('https://gov.uk/bank-holidays.json');
+      return res.json();
+    } catch (err) {
+      console.log(err);
+    }
+  }, []);
+
+  const {status, value, error} = useAsync<void>(
+    fetchBankHolidays,
+    true,
+    filterBankHolidayData,
+  );
+
+  console.log(value);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView>
+      <ScrollView contentInsetAdjustmentBehavior="automatic"></ScrollView>
     </SafeAreaView>
   );
 };
