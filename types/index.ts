@@ -1,13 +1,17 @@
-export interface Event {
+export interface BankHoliday {
   title: string;
   date: string;
   notes: string;
   bunting: boolean;
 }
 
+export interface BankHolidayWithId extends BankHoliday {
+  id: number;
+}
+
 export interface Country {
   division: string;
-  events: Event[];
+  events: BankHoliday[];
 }
 
 export interface BankHolidayResponse {

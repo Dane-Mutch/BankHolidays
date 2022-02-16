@@ -8,75 +8,36 @@
  * @format
  */
 
-import React, {useEffect, useState} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {NativeBaseProvider} from 'native-base';
+import React from 'react';
+import {Provider} from 'react-redux';
+import {Edit} from './screen/Edit';
+import {Home} from './screen/Home';
+import {store} from './store';
+import {BankHolidayWithId} from './types';
 
-import {BankHolidayResponse, Event} from './types';
-
-const isFutureDatePredicate = (value: string) => {
-  const now = new Date();
-  const dateToTest = new Date(value);
-  return now.getTime() <= dateToTest.getTime();
+export type RootStackParamList = {
+  Home: undefined;
+  Edit: BankHolidayWithId;
 };
 
-const getUpcomingBankHolidays = (data: BankHolidayResponse): Event[] => {
-  const events = data['england-and-wales'].events;
-  const futureEvents = events.filter(event => {
-    return isFutureDatePredicate(event.date);
-  });
-
-  return futureEvents.slice(0, 5);
-};
+const Stack = createNativeStackNavigator();
 
 const App = () => {
-  const [bankHolidays, setBankHolidays] = useState<Event[]>();
-
-  useEffect(() => {
-    if (!bankHolidays) {
-      const fetchBankHolidays = async () => {
-        try {
-          const res = await fetch('https://gov.uk/bank-holidays.json');
-          const json: BankHolidayResponse = await res.json();
-          const upcomingBankHolidays = getUpcomingBankHolidays(json);
-          setBankHolidays(upcomingBankHolidays);
-        } catch (err) {
-          console.log(err);
-        }
-      };
-      fetchBankHolidays();
-    }
-  }, [bankHolidays]);
-
   return (
-    <SafeAreaView>
-      <ScrollView contentInsetAdjustmentBehavior="automatic">
-        {bankHolidays?.map(holiday => (
-          <View key={holiday.date}>
-            <Text>{holiday.title}</Text>
-          </View>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+    <Provider store={store}>
+      <NavigationContainer>
+        <NativeBaseProvider>
+          <Stack.Navigator initialRouteName="Home">
+            <Stack.Screen name="Home" component={Home} />
+            <Stack.Screen name="Edit" component={Edit} />
+          </Stack.Navigator>
+        </NativeBaseProvider>
+      </NavigationContainer>
+    </Provider>
   );
 };
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
