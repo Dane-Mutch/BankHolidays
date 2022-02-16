@@ -16,7 +16,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import {SafeAreaView} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {updateEntry} from '../store/holidaySlice';
-import {BankHoliday, BankHolidayWithId} from '../types';
+import {BankHolidayWithId} from '../types';
 
 type EditProps = NativeStackScreenProps<RootStackParamList, 'Edit'>;
 
