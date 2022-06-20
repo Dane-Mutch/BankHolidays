@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Flex,
+  FormControl,
   HStack,
   Input,
   Switch,
@@ -15,79 +16,88 @@ import {RootStackParamList} from '../App';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {SafeAreaView} from 'react-native';
 import {useDispatch} from 'react-redux';
-import {updateEntry} from '../store/holidaySlice';
+import {updateHolidayEntry} from '../store/holidaySlice';
 import {BankHolidayWithId} from '../types';
 
 type EditProps = NativeStackScreenProps<RootStackParamList, 'Edit'>;
 
 export const Edit = ({navigation, route}: EditProps) => {
-  const [data, setData] = useState(route.params);
+  const [holiday, setHoliday] = useState(route.params);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const dispatch = useDispatch();
 
   const onChange = (_: unknown, selectedDate: Date | undefined) => {
-    const rawDate = selectedDate || data.date;
+    const rawDate = selectedDate || holiday.date;
     const date = new Date(rawDate).toLocaleDateString();
-    setData({...data, date});
     setShowDatePicker(false);
+    setHoliday({...holiday, date});
   };
 
   const handleChangeText = (title: string) => {
-    setData({...data, title});
+    setHoliday({...holiday, title});
   };
 
-  const handleNotesChange = (notes: string) => setData({...data, notes});
+  const handleNotesChange = (notes: string) => setHoliday({...holiday, notes});
 
-  const handleButtonPress = (submitData: BankHolidayWithId) => {
-    console.log(submitData);
-    dispatch(updateEntry(submitData));
+  const handleSubmitPress = (updatedHoliday: BankHolidayWithId) => {
+    dispatch(updateHolidayEntry(updatedHoliday));
     navigation.navigate('Home');
   };
+
+  const handleEditDatePress = () => setShowDatePicker(true);
+
+  const handleBuntingToggle = () =>
+    setHoliday({...holiday, bunting: !holiday.bunting});
 
   return (
     <SafeAreaView>
       <VStack padding={3} space="lg">
-        <Flex flexDirection="row" justifyContent="flex-start">
-          <Box paddingRight={3}>
-            <Text fontSize="md">Date</Text>
-            <Text fontSize="md">{data.date}</Text>
-          </Box>
-          <Button onPress={() => setShowDatePicker(true)}>Edit</Button>
-        </Flex>
+        <Box>
+          <Text fontSize="lg">Date</Text>
+          <Text fontSize="lg">{holiday.date}</Text>
+        </Box>
+        <Button flexGrow={1} onPress={handleEditDatePress}>
+          Edit Date
+        </Button>
 
         {showDatePicker && (
-          <DateTimePicker value={new Date(data.date)} onChange={onChange} />
+          <DateTimePicker value={new Date(holiday.date)} onChange={onChange} />
         )}
         <VStack>
-          <Text fontSize="md">Bank holiday name?</Text>
-          <Input
-            fontSize="md"
-            variant="filled"
-            onChangeText={handleChangeText}
-            value={data.title}
-          />
+          <FormControl>
+            <FormControl.Label fontSize="lg">
+              Bank holiday name
+            </FormControl.Label>
+            <Input
+              fontSize="md"
+              variant="filled"
+              onChangeText={handleChangeText}
+              value={holiday.title}
+            />
+          </FormControl>
         </VStack>
 
         <HStack space={2}>
-          <Text fontSize="md">Bunting?</Text>
-          <Switch
-            fontSize="md"
-            isChecked={data.bunting}
-            onToggle={() => setData({...data, bunting: !data.bunting})}
-          />
+          <Text fontSize="lg">Bunting</Text>
+          <Switch isChecked={holiday.bunting} onToggle={handleBuntingToggle} />
         </HStack>
 
         <VStack>
-          <Text fontSize="md">Anything else to add?</Text>
-          <TextArea
-            fontSize="md"
-            variant="filled"
-            value={data.notes}
-            onChangeText={handleNotesChange}
-          />
+          <FormControl>
+            <FormControl.Label>
+              <Text fontSize="md">Notes</Text>
+            </FormControl.Label>
+            <TextArea
+              variant="filled"
+              value={holiday.notes}
+              onChangeText={handleNotesChange}
+            />
+          </FormControl>
         </VStack>
 
-        <Button onPress={() => handleButtonPress(data)}>Submit changes</Button>
+        <Button onPress={() => handleSubmitPress(holiday)}>
+          Submit changes
+        </Button>
       </VStack>
     </SafeAreaView>
   );

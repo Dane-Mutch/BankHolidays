@@ -26,6 +26,7 @@ const getUpcomingBankHolidays = (
     return isFutureDatePredicate(event.date);
   });
 
+  // Show 6 for display purposes
   return futureEvents.slice(0, 5).map((event, index) => ({
     ...event,
     date: new Date(event.date).toLocaleDateString(),
@@ -48,7 +49,7 @@ export const holidaySlice = createSlice({
   // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
-    updateEntry: (state, action: PayloadAction<BankHolidayWithId>) => {
+    updateHolidayEntry: (state, action: PayloadAction<BankHolidayWithId>) => {
       if (state.items) {
         const indexToUpdate = state.items.findIndex(
           item => item.id === action.payload.id,
@@ -65,7 +66,7 @@ export const holidaySlice = createSlice({
   },
 });
 
-export const {updateEntry} = holidaySlice.actions;
+export const {updateHolidayEntry} = holidaySlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type
 export const selectHolidays = (state: RootState) => state.holidays.items;
